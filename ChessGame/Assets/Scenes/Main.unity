@@ -289,7 +289,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 974193435}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f26d711cf01becc48842203fe197985b, type: 3}
+  m_Script: {fileID: 11500000, guid: 99dd136aeaf2f8f488aa75e566b4ffd3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   chessmanPrefabs:
