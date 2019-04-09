@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class BoardManager : MonoBehaviour
 {
+    public static BoardManager Instance { set; get; }
+    private bool[,] allowedMoves { set; get; }
+
     public Chessman[,] Chessmans { set; get; }
     private Chessman selectedChessman;
 
@@ -22,7 +25,8 @@ public class BoardManager : MonoBehaviour
 
     private void Start()
     {
-        SpawnAllChessman();
+        Instance = this;
+        SpawnAllChessmans();
     }
 
     private void Update()
@@ -56,19 +60,43 @@ public class BoardManager : MonoBehaviour
         if (Chessmans[x, y].isWhite != isWhiteTurn)
             return;
 
+        bool hasAtleastOneMove = false;
+        allowedMoves = Chessmans[x, y].PossibleMove();
+        for (int i = 0; i < 8; i++)
+            for (int j = 0; j < 8; j++)
+                if (allowedMoves[i, j])
+                    hasAtleastOneMove = true;
+        if (!hasAtleastOneMove)
+            return;
         selectedChessman = Chessmans[x, y];
+        BoardHighlights.Instance.HighlightAllowedMoves(allowedMoves);
     }
 
     private void MoveChessman(int x, int y)
     {
-        if (selectedChessman.PossibleMove(x, y))
+        if (allowedMoves[x,y])
         {
+            Chessman c = Chessmans[x, y];
+            if(c != null && c.isWhite != isWhiteTurn)
+            {
+                //capture a piece
+
+                //if it is the king and the game
+                if(c.GetType()== typeof(King))
+                {
+                    EndGame();
+                    return;
+                }
+                activeChessman.Remove(c.gameObject);
+                Destroy(c.gameObject);
+            }
             Chessmans[selectedChessman.CurrentX, selectedChessman.CurrentY] = null;
             selectedChessman.transform.position = GetTileCenter(x, y);
+            selectedChessman.SetPosition(x, y);
             Chessmans[x, y] = selectedChessman;
             isWhiteTurn = !isWhiteTurn;
         }
-
+        BoardHighlights.Instance.Hidehighlights();
         selectedChessman = null;
     }
 
@@ -99,16 +127,16 @@ public class BoardManager : MonoBehaviour
         activeChessman.Add(go);
     }
 
-    private void SpawnAllChessman()
+    private void SpawnAllChessmans()
     {
         activeChessman = new List<GameObject>();
         Chessmans = new Chessman[8, 8];
 
         //Spawn White team
         //King
-        SpawnChessman(0, 3, 0);
+        SpawnChessman(0, 4, 0);
         //Queen
-        SpawnChessman(1, 4, 0);
+        SpawnChessman(1, 3, 0);
         //Rooks
         SpawnChessman(2, 0, 0);
         SpawnChessman(2, 7, 0);
@@ -126,9 +154,9 @@ public class BoardManager : MonoBehaviour
 
         //Spawn Black Team
         //King
-        SpawnChessman(6, 3, 7);
+        SpawnChessman(6, 4, 7);
         //Queen
-        SpawnChessman(7, 4, 7);
+        SpawnChessman(7, 3, 7);
         //Rooks
         SpawnChessman(8, 0, 7);
         SpawnChessman(8, 7, 7);
@@ -179,5 +207,20 @@ public class BoardManager : MonoBehaviour
                 Vector3.forward * selectionY + Vector3.right * (selectionX + 1));
 
         }
+    }
+
+    private void EndGame()
+    {
+        if (isWhiteTurn)
+            Debug.Log("White team wins");
+        else
+            Debug.Log("Black team wins");
+
+        foreach (GameObject go in activeChessman)
+            Destroy(go);
+
+        isWhiteTurn = true;
+        BoardHighlights.Instance.Hidehighlights();
+        SpawnAllChessmans();
     }
 }
